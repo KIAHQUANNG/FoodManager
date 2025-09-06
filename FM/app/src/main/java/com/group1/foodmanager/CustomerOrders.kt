@@ -72,7 +72,7 @@ data class OrderModel(
     val items: List<OrderItem> = emptyList(),
     val totalPrice: Double = 0.0,
     val serviceCharge: Double = 0.0,
-    val status: String = "pending",
+    val status: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val incomeId: String = ""
@@ -84,7 +84,7 @@ data class MenuItem(
     val price: Double = 0.0,
     val recipe: Map<String, Long> = emptyMap(),
     val imageResName: String? = null,
-    val imageResId: Int = R.drawable.chicken_rice
+    val imageResId: Int = R.drawable.un
 )
 
 data class StockItem(
@@ -101,7 +101,7 @@ fun OrderCard(order: OrderModel, onUpdate: (OrderModel) -> Unit, onDelete: (Orde
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text("Order ID: ${order.orderId}", style = MaterialTheme.typography.bodyMedium)
-            Text("Status: ${order.status}", style = MaterialTheme.typography.bodySmall)
+            //Text("Status: ${order.status}", style = MaterialTheme.typography.bodySmall)
             Text("Total: ${formatCurrency(order.totalPrice)}", style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(4.dp))
             Column {
@@ -150,7 +150,7 @@ fun CustomerOrdersScreen(
                     ?: run {
                         val name = menuItemRaw.imageResName ?: ""
                         val id = context.resources.getIdentifier(name, "drawable", context.packageName)
-                        if (id != 0) id else R.drawable.chicken_rice
+                        if (id != 0) id else R.drawable.un
                     }
                 menuItemRaw.copy(imageResId = resolvedImageId)
             }

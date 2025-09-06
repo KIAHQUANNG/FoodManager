@@ -183,8 +183,8 @@ private fun CustomerHomeContent(
 
                         val imageResId = imageName?.let { imgName ->
                             val id = context.resources.getIdentifier(imgName, "drawable", context.packageName)
-                            if (id != 0) id else R.drawable.chicken_rice
-                        } ?: R.drawable.chicken_rice
+                            if (id != 0) id else R.drawable.un
+                        } ?: R.drawable.un
 
                         MenuItem(
                             menuId = doc.id,
@@ -450,6 +450,7 @@ fun FoodDetailScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
+            if (menuItem.imageResId != R.drawable.un) {
             Image(
                 painter = painterResource(menuItem.imageResId),
                 contentDescription = menuItem.name,
@@ -460,7 +461,7 @@ fun FoodDetailScreen(
                     .clip(RoundedCornerShape(16.dp))
             )
             Spacer(Modifier.height(12.dp))
-
+}
             Text(menuItem.name, style = MaterialTheme.typography.headlineSmall)
             Text(
                 "RM %.2f".format(totalPrice),

@@ -65,6 +65,7 @@ class CustomerOrdersViewModel : ViewModel() {
                 val price = readPrice(doc)
                 val recipe = readRecipe(doc.get("recipe"))
                 val imageName = doc.getString("imageResName")
+
                 MenuItem(
                     menuId = doc.id,
                     name = name,

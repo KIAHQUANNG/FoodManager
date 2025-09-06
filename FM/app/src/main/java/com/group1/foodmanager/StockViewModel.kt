@@ -1,6 +1,8 @@
 package com.group1.foodmanager
 
+import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -11,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 sealed class UiEvent {
@@ -38,6 +41,14 @@ class StockViewModel : ViewModel() {
     var adjustStockItem by mutableStateOf<StockItem?>(null)
     var newStockQty by mutableStateOf(1)
 
+    val showAddMenuDialog = mutableStateOf(false)
+    val menuName = mutableStateOf("")
+    val menuPrice = mutableStateOf("")
+    val selectedIngredients = mutableStateOf<Map<String, Long>>(emptyMap())
+    val showIngredientSelectDialog = mutableStateOf(false)
+    val tempSelectedStock = mutableStateOf<StockItem?>(null)
+    val tempIngredientQty = mutableIntStateOf(1)
+
     private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
     val events = _events.asSharedFlow()
 
@@ -63,7 +74,9 @@ class StockViewModel : ViewModel() {
         super.onCleared()
     }
 
-    fun openMaterialSelect() { showMaterialSelectDialog = true }
+    fun openMaterialSelect() {
+        showAddMenuDialog.value = true  // 改成这个
+    }
     fun closeMaterialSelect() { showMaterialSelectDialog = false }
 
     fun selectMaterialToAdd(material: StockItem) {
@@ -115,7 +128,11 @@ class StockViewModel : ViewModel() {
     fun updateAdjustmentReason(reason: String) {
         adjustmentReason = reason
     }
-
+    private fun sendEvent(event: UiEvent) {
+        viewModelScope.launch {
+            _events.emit(event)
+        }
+    }
 
     fun confirmAdjust() {
         val item = adjustStockItem ?: return
@@ -136,5 +153,102 @@ class StockViewModel : ViewModel() {
                 _events.emit(UiEvent.Error("Adjustment failed: ${e.message}"))
             }
         }
+    }
+    fun closeAddMenuDialog() {
+        showAddMenuDialog.value = false
+        menuName.value = ""
+        menuPrice.value = ""
+        selectedIngredients.value = emptyMap()
+    }
+
+    fun openIngredientSelect() {
+        showIngredientSelectDialog.value = true
+        tempSelectedStock.value = null
+        tempIngredientQty.value = 1
+    }
+
+    fun closeIngredientSelect() {
+        showIngredientSelectDialog.value = false
+    }
+
+    fun selectTempStock(stock: StockItem) {
+        tempSelectedStock.value = stock
+    }
+
+    fun increaseTempQty() {
+        tempIngredientQty.value++
+    }
+
+    fun decreaseTempQty() {
+        if (tempIngredientQty.value > 1) {
+            tempIngredientQty.value--
+        }
+    }
+
+    fun addIngredientToRecipe() {
+        tempSelectedStock.value?.let { stock ->
+            val currentIngredients = selectedIngredients.value.toMutableMap()
+            currentIngredients[stock.foodId] = tempIngredientQty.value.toLong()
+            selectedIngredients.value = currentIngredients
+            closeIngredientSelect()
+        }
+    }
+
+    fun removeIngredient(ingredientId: String) {
+        val currentIngredients = selectedIngredients.value.toMutableMap()
+        currentIngredients.remove(ingredientId)
+        selectedIngredients.value = currentIngredients
+    }
+
+    fun saveMenuWithRecipe() {
+        viewModelScope.launch {
+            try {
+                val menuPrice = menuPrice.value.toDoubleOrNull()
+                if (menuPrice == null || menuPrice <= 0) {
+                    sendEvent(UiEvent.Error("Please enter a valid price"))
+                    return@launch
+                }
+
+                if (menuName.value.isBlank()) {
+                    sendEvent(UiEvent.Error("Please enter menu name"))
+                    return@launch
+                }
+
+                if (selectedIngredients.value.isEmpty()) {
+                    sendEvent(UiEvent.Error("Please add at least one ingredient"))
+                    return@launch
+                }
+
+                saveMenuToFirestore(
+                    name = menuName.value.trim(),
+                    price = menuPrice,
+                    recipe = selectedIngredients.value
+                )
+
+                closeAddMenuDialog()
+                sendEvent(UiEvent.Toast("Menu added successfully"))
+            } catch (e: Exception) {
+                sendEvent(UiEvent.Error("Failed to save menu: ${e.message}"))
+            }
+        }}
+}
+suspend fun saveMenuToFirestore(
+    name: String,
+    price: Double,
+    recipe: Map<String, Long>
+) {
+    val db = FirebaseFirestore.getInstance()
+
+    try {
+        val menuData = hashMapOf<String, Any>(
+            "name" to name,
+            "price" to price,
+            "recipe" to recipe
+        )
+
+        db.collection("menu").add(menuData).await()
+    } catch (e: Exception) {
+        Log.e("saveMenuToFirestore", "Failed to save menu: ${e.message}", e)
+        throw e
     }
 }
