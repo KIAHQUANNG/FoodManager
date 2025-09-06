@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1031748166724",
+    "project_id": "foodmanager-d46f5",
+    "storage_bucket": "foodmanager-d46f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1031748166724:android:090c6a93d3837710460811",
+        "android_client_info": {
+          "package_name": "com.group1.foodmanager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgrghnq9Qn0frI-XmmXSpC-JrsMvaDQBY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
